@@ -1,26 +1,582 @@
-<!doctype html>
-<html>
-  <head>
-    <meta charset="utf-8">
-    <title>首页</title>
-    <link rel="stylesheet" href="./basic.css" />
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  </head>
-  <body>
-    <div class="d"><p id="d1">3月22日</p><p id="d2" style="float: right;">距离放假还有1天</p></div>
-    <div style="display: flex;width: 100%;justify-content: center;">
-      <input type="text" id="s">
-      <svg id="search" viewBox="0 0 1024 1024" version="1.1" xmlns="//www.w3.org/2000/svg" p-id="2501"><path d="M0 0h1024v1024H0z" fill="#FFFFFF" fill-opacity="0" p-id="2502"></path><path d="M949.504 898.56l-205.696-205.632A384 384 0 1 0 64 448a384 384 0 0 0 628.928 295.808l205.696 205.696a36.032 36.032 0 0 0 51.008 0 36.288 36.288 0 0 0-0.128-51.008z m-380.16-163.072c-38.4 16.32-79.168 24.512-121.344 24.512a311.296 311.296 0 0 1-220.608-91.392 311.296 311.296 0 0 1-66.88-342.016 311.296 311.296 0 0 1 66.88-99.2 311.296 311.296 0 0 1 342.016-66.88c37.12 15.68 70.464 38.208 99.2 66.88a311.296 311.296 0 0 1 66.88 342.016 311.296 311.296 0 0 1-66.88 99.2c-28.736 28.672-62.016 51.2-99.2 66.88z" fill="#FFFFFF" p-id="2503"></path></svg>
+    <title>六科成绩分析</title>
+    <style>
+        ::-webkit-scrollbar{display: none;}
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        body {
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+        }
+        .container {
+            background: #3f72af;
+            padding: 20px;
+        }
+        .input-section {
+            background-color: #48466d;
+            padding: 20px;
+        }
+        .history-section {
+            background: #1f3e62;;
+            padding: 20px;
+        }
+        
+        .visualization-section {
+            grid-column: span 2;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-top: 20px;
+        }
+        
+        @media (max-width: 900px) {
+            .visualization-section {
+                grid-column: span 1;
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        h2 {
+            margin-bottom: 20px;
+            font-size: 1.8rem;
+            position: relative;
+            padding-bottom: 10px;
+        }
+        
+        h2:after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 60px;
+            height: 3px;
+            background: linear-gradient(90deg, #4facfe, #00f2fe);
+            border-radius: 3px;
+        }
+        
+        .form-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .input-box {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+        
+        input {
+            width: 100%;
+            padding: 12px 15px;
+            border-radius: 8px;
+            border: none;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            font-size: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        input:focus {
+            outline: none;
+            border-color: #4facfe;
+            background: rgba(255, 255, 255, 0.15);
+        }
+        
+        button {
+            background: linear-gradient(90deg, #4facfe, #00f2fe);
+            border: none;
+            padding: 14px 25px;
+            color: white;
+            font-size: 16px;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+            margin-top: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+        }
+        
+        button.secondary {
+            background: transparent;
+            border: 2px solid #4facfe;
+            margin-top: 15px;
+        }
+        
+        #chart-container {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 400px;
+        }
+        
+        #scores-table {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            overflow: hidden;
+            padding: 0;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: rgba(0, 10, 30, 0.4);
+        }
+        
+        th {
+            background: rgba(79, 172, 254, 0.3);
+            padding: 16px 15px;
+            text-align: left;
+        }
+        
+        td {
+            padding: 14px 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        tr:hover {
+            background: rgba(79, 172, 254, 0.1);
+        }
+        
+        .history-list {
+            max-height: 300px;
+            overflow-y: auto;
+            padding-right: 10px;
+        }
+        
+        .history-item {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            transition: all 0.3s ease;
+        }
+        
+        .history-item:hover {
+            background: rgba(79, 172, 254, 0.15);
+            transform: translateX(5px);
+        }
+        
+        .history-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+        
+        .history-title {
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+        
+        .history-date {
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+        
+        .score-bar {
+            height: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            margin-top: 10px;
+            position: relative;
+        }
+        
+        .bar-fill {
+            height: 100%;
+            border-radius: 4px;
+            background: linear-gradient(90deg, #4facfe, #00f2fe);
+        }
+        
+        .no-data {
+            text-align: center;
+            padding: 40px;
+            font-size: 1.1rem;
+            opacity: 0.7;
+        }
+        
+        #radar-chart {
+            display: block;
+            margin: 0 auto;
+        }
+        
+        .canvas-container {
+            position: relative;
+            width: 400px;
+            height: 400px;
+        }
+        
+        .stats-overlay {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 15px;
+            border-radius: 50%;
+            width: 150px;
+            height: 150px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .overall-score {
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: #4facfe;
+        }
+        
+        .overall-label {
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+    </style>
+</head>
+<body>
+  <div style="height: 100vh;overflow: auto;">
+    <div class="history-section">
+    <h2>历史记录</h2> <div class="history-list" id="historyList"></div> <button id="clearHistory" class="secondary">清除所有历史记录</button> 
     </div>
-    <div id="time"></div>
-    <div class="c">
-      <div>
-        <!-- <li>论坛</li> -->
-        <li onclick="cloud()">云盘</li>
-      </div>
-      <div><li><a target="_blank" href="//bilibili.com">哔哩哔哩</a></li><li><a target="_blank" href="//tv.cctv.com/2012/12/15/VIDA1355518366208743.shtml">易中天品三国</a></li></div>
-      <div><li><a href="//ai.com">ai</a></li><li><a href="//mathsolver.microsoft.com/zh">计算器</a></li><li><a href="//stein.world/game">酒杯世界</a></li></div>
+    <div class="input-section">
+      <h2>成绩录入</h2>
+      <div class="form-group"> <div class="input-box"> <label for="examName">考试名称</label> <input type="text" id="examName" placeholder="例如：期中考试"> </div> <div class="input-box"> <label for="examDate">考试日期</label> <input type="date" id="examDate"> </div> </div>
+      <div class="form-group"> <div class="input-box"> <label for="chinese">语文成绩</label> <input type="number" id="chinese" min="0" max="150" placeholder="输入分数 (0-150)"> </div> <div class="input-box"> <label for="math">数学成绩</label> <input type="number" id="math" min="0" max="150" placeholder="输入分数 (0-150)"> </div> </div>
+      <div class="form-group"> <div class="input-box"> <label for="english">英语成绩</label> <input type="number" id="english" min="0" max="150" placeholder="输入分数 (0-150)"> </div> <div class="input-box"> <label for="biology">生物成绩</label> <input type="number" id="biology" min="0" max="100" placeholder="输入分数 (0-100)"> </div> </div>
+      <div class="form-group"> <div class="input-box"> <label for="physics">物理成绩</label> <input type="number" id="physics" min="0" max="100" placeholder="输入分数 (0-100)"> </div> <div class="input-box"> <label for="chemistry">化学成绩</label> <input type="number" id="chemistry" min="0" max="100" placeholder="输入分数 (0-100)"> </div> </div>
+      <div class="input-box"> <label for="physics">参照</label> <input type="number" id="reference" min="0" placeholder="输入参照"> </div>
+      <button id="saveData">生成分析</button>
     </div>
-    <script src="index.js"></script>
-  </body>
+  </div>
+  
+  <div class="container">
+    <div class="visualization-section">
+      <div> <h2>成绩雷达图</h2> <div id="chart-container"> <div class="canvas-container"> <canvas id="radar-chart" width="400" height="400"></canvas> <div class="stats-overlay"> <div class="overall-score" id="overallScore">0%</div> <div class="overall-label">综合得分率</div> </div> </div> </div> </div>
+      <div> <h2>成绩分析表</h2> <div id="scores-table"> <table> <thead> <tr> <th>科目</th> <th>分数</th> <th>满分</th> <th>得分率</th> </tr> </thead> <tbody id="scores-body"> <!-- 表格内容将通过JavaScript动态生成 --> </tbody> </table> </div> </div>
+    </div>
+  </div>
+
+    <script>
+      function SUM(obj) {let sum = 0;for (let key in obj) {if (typeof obj[key] === 'number') {sum += obj[key];}}return sum;}
+        document.addEventListener('DOMContentLoaded', function() {
+            const today = new Date().toISOString().substr(0, 10);
+            document.getElementById('examDate').value = today;
+            loadHistory();
+            document.getElementById('saveData').addEventListener('click', saveExamData);
+            document.getElementById('clearHistory').addEventListener('click', clearHistory);
+            // 绘制初始空雷达图
+            drawRadarChart([0, 0, 0, 0, 0, 0]);
+            updateTable();
+        });
+        // 保存考试数据
+        function saveExamData() {
+            const examName = document.getElementById('examName').value.trim();
+            const examDate = document.getElementById('examDate').value;
+            if (!examName) {alert('请输入考试名称');return;}if (!examDate) {alert('请选择考试日期');return;}
+            let scores = {chinese: parseFloat(document.getElementById('chinese').value) || 0,math: parseFloat(document.getElementById('math').value) || 0,english: parseFloat(document.getElementById('english').value) || 0,physics: parseFloat(document.getElementById('physics').value) || 0,chemistry: parseFloat(document.getElementById('chemistry').value) || 0,biology: parseFloat(document.getElementById('biology').value) || 0};
+            scores.sum = SUM(scores);
+            if (!isValidScore(scores.chinese, 150) || !isValidScore(scores.math, 150) ||!isValidScore(scores.english, 150) || !isValidScore(scores.physics, 100) ||!isValidScore(scores.chemistry, 100) || !isValidScore(scores.biology, 100)) {alert('成绩输入无效，请检查输入是否在0-满分之间');return;}
+            const record = {id: new Date().getTime(),name: examName,date: examDate,scores: scores,reference: parseFloat(document.getElementById('reference').value) || 0};
+            // 获取现有的历史记录
+            const history = getHistoryRecords();
+            // 添加到历史记录
+            history.push(record);
+            // 保存到cookie（只保留最近的10条记录）
+            if (history.length > 10) {history.shift();}
+            // 存储更新后的历史记录
+            saveHistoryRecords(history);
+            // 重新加载历史记录
+            loadHistory();
+            // 绘制图表和表格
+            displayResults(scores);
+        }
+        function isValidScore(score, max) {return !isNaN(score) && score >= 0 && score <= max;}
+        
+        // 获取历史记录
+        function getHistoryRecords(){const cookieValue = getCookie('examRecords');if (cookieValue) {try {return JSON.parse(cookieValue);} catch (e) {console.error('解析历史记录失败', e);}}return [];}
+        // 保存历史记录到Cookie
+        function saveHistoryRecords(records) {const expires = new Date();expires.setFullYear(expires.getFullYear() + 2); setCookie('examRecords', JSON.stringify(records), expires);}
+        // 加载历史记录到列表
+        let reference = [null],i=0;
+        //加载记录
+        function loadHistory() {
+            const historyList = document.getElementById('historyList');
+            const history = getHistoryRecords();
+            if (history.length === 0) {historyList.innerHTML = '<div class="no-data">暂无历史记录</div>';return;}
+            let historyHTML = '';
+            // 按时间倒序排列
+            history.sort((a, b) => a.id - b.id).forEach(record => {
+                const rates = scoreRates(record.scores);
+                reference.push(record.reference);
+                historyHTML += `
+                    <div class="history-item" data-id="${record.id}">
+                        <div class="history-header"><div class="history-title">${record.name}</div><div class="history-date">${record.date}</div></div>
+                        <div>综合得分率: <strong>${(rates[6] * 100).toFixed(1)}%</strong><span style="float:right">参考：${reference[i+1]}</span></div>
+                        <div class="score-bar"><div class="bar-fill" style="width: ${rates[6] * 100}%"></div></div>
+                    </div>
+                `;
+              i++;
+            });
+            historyList.innerHTML = historyHTML;
+            
+            // 添加点击事件
+            document.querySelectorAll('.history-item').forEach(item => {
+                item.addEventListener('click', function() {
+                    const id = parseInt(this.getAttribute('data-id'));
+                    const history = getHistoryRecords();
+                    const record = history.find(r => r.id === id);
+                    if (record) {
+                        // 显示该记录的成绩
+                        displayResults(record.scores);
+                        // 高亮显示选中的记录
+                        document.querySelectorAll('.history-item').forEach(el => {
+                            el.style.background = '';
+                        });
+                        this.style.background = 'rgba(79, 172, 254, 0.25)';
+                    }
+                });
+            });
+        }
+        
+        // 重置表单
+        function resetForm() {
+            document.getElementById('examName').value = '';
+            document.getElementById('examDate').value = new Date().toISOString().substr(0, 10);
+            document.getElementById('chinese').value = '';
+            document.getElementById('math').value = '';
+            document.getElementById('english').value = '';
+            document.getElementById('physics').value = '';
+            document.getElementById('chemistry').value = '';
+            document.getElementById('biology').value = '';
+        }
+        
+        // 清除所有历史记录
+        function clearHistory() {if (confirm('确定要清除所有历史记录吗？此操作不可撤销。')) {setCookie('examRecords', '', new Date(0));document.getElementById('historyList').innerHTML = '<div class="no-data">暂无历史记录</div>';}}
+        
+        // 显示成绩结果
+        function displayResults(scores) {
+            // 计算得分率
+            const rates = scoreRates(scores);
+            
+            updateTable(scores, rates);
+            drawRadarChart(rates);
+            
+            // 更新综合得分率
+            document.getElementById('overallScore').textContent = `${(rates[6] * 100).toFixed(1)}%`;
+        }
+        
+        // 计算各科得分率
+        function scoreRates(scores) {return [scores.chinese / 150,scores.math / 150,scores.english / 150,scores.physics / 100,scores.chemistry / 100,scores.biology / 100,scores.sum /750];}
+        
+        // 更新成绩表格
+        function updateTable(scores = {}, rates = []) {
+            const tbody = document.getElementById('scores-body');
+            // scores.
+            if (!scores.chinese && !scores.math) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="4" style="text-align:center; padding:40px 0; opacity:0.7;">
+                            请输入成绩并点击"保存并生成分析"
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            tbody.innerHTML = `
+                <tr>
+                    <td>语文</td>
+                    <td>${scores.chinese || 0}</td>
+                    <td>150</td>
+                    <td>${((rates[0] || 0) * 100).toFixed(1)}%</td>
+                </tr>
+                <tr>
+                    <td>数学</td>
+                    <td>${scores.math || 0}</td>
+                    <td>150</td>
+                    <td>${((rates[1] || 0) * 100).toFixed(1)}%</td>
+                </tr>
+                <tr>
+                    <td>英语</td>
+                    <td>${scores.english || 0}</td>
+                    <td>150</td>
+                    <td>${((rates[2] || 0) * 100).toFixed(1)}%</td>
+                </tr>
+                <tr>
+                    <td>物理</td>
+                    <td>${scores.physics || 0}</td>
+                    <td>100</td>
+                    <td>${((rates[3] || 0) * 100).toFixed(1)}%</td>
+                </tr>
+                <tr>
+                    <td>化学</td>
+                    <td>${scores.chemistry || 0}</td>
+                    <td>100</td>
+                    <td>${((rates[4] || 0) * 100).toFixed(1)}%</td>
+                </tr>
+                <tr>
+                    <td>生物</td>
+                    <td>${scores.biology || 0}</td>
+                    <td>100</td>
+                    <td>${((rates[5] || 0) * 100).toFixed(1)}%</td>
+                </tr>
+                <tr>
+                    <td>总分</td>
+                    <td>${scores.sum || 0}</td>
+                    <td>750</td>
+                    <td>${((rates[6] || 0) * 100).toFixed(1)}%</td>
+                </tr>
+            `;
+        }
+        // 绘制雷达图
+        function drawRadarChart(data) {
+            const canvas = document.getElementById('radar-chart');
+            const ctx = canvas.getContext('2d');
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            const radius = Math.min(centerX, centerY) * 0.8;
+            const numPoints = data.length - 1;
+            const angle = Math.PI * 2 / numPoints;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // 绘制数据点
+            ctx.beginPath();
+            for (let i = 0; i < numPoints; i++) {
+                const rate = data[i];
+                const scaledRadius = radius * Math.min(rate, 1);
+                const currentAngle = angle * i - Math.PI / 2;
+                const x = centerX + Math.cos(currentAngle) * scaledRadius;
+                const y = centerY + Math.sin(currentAngle) * scaledRadius;
+                
+                if (i === 0) {
+                    ctx.moveTo(x, y);
+                } else {
+                    ctx.lineTo(x, y);
+                }
+                
+                // 绘制数据点
+                // ctx.fillStyle = '#4facfe';
+                ctx.arc(x, y, 5, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            
+            // 绘制数据区域
+            ctx.closePath();
+            ctx.lineWidth = 2;
+            ctx.strokeStyle = '#4facfe';
+            ctx.stroke();
+            ctx.fillStyle = '#5783b9';
+            ctx.fill();
+            
+            
+            // 绘制网格线
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+            ctx.lineWidth = 1;
+            
+            // 绘制多边形网格
+            for (let level = 1; level <= 5; level++) {
+                ctx.beginPath();
+                const scaledRadius = radius * (level / 5);
+                
+                for (let i = 0; i <= numPoints; i++) {
+                    const currentAngle = angle * i - Math.PI / 2;
+                    const x = centerX + Math.cos(currentAngle) * scaledRadius;
+                    const y = centerY + Math.sin(currentAngle) * scaledRadius;
+                    
+                    if (i === 0) {
+                        ctx.moveTo(x, y);
+                    } else {
+                        ctx.lineTo(x, y);
+                    }
+                }
+                
+                ctx.closePath();
+                ctx.stroke();
+            }
+            
+            // 绘制轴线
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+            ctx.lineWidth = 1;
+            
+            for (let i = 0; i < numPoints; i++) {
+                const currentAngle = angle * i - Math.PI / 2;
+                const x = centerX + Math.cos(currentAngle) * radius;
+                const y = centerY + Math.sin(currentAngle) * radius;
+                
+                ctx.beginPath();
+                ctx.moveTo(centerX, centerY);
+                ctx.lineTo(x, y);
+                ctx.stroke();
+            }
+            
+            // 绘制标签
+            const subjects = ['语文', '数学', '英语', '物理', '化学', '生物'];
+            ctx.fillStyle = '#fff';
+            ctx.font = 'bold 14px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            
+            for (let i = 0; i < numPoints; i++) {
+                const labelAngle = angle * i - Math.PI / 2;
+                const labelRadius = radius * 1.05;
+                const x = centerX + Math.cos(labelAngle) * labelRadius;
+                const y = centerY + Math.sin(labelAngle) * labelRadius;
+                
+                ctx.fillText(subjects[i], x, y);
+                
+                // 绘制得分率文本
+                const rate = data[i];
+                const scoreRadius = radius * rate * 0.9;
+                const scoreX = centerX + Math.cos(labelAngle) * scoreRadius;
+                const scoreY = centerY + Math.sin(labelAngle) * scoreRadius;
+                
+                ctx.fillStyle = '#4facfe';
+                ctx.font = 'bold 12px Arial';
+                ctx.fillText(`${(rate * 100).toFixed(1)}%`, scoreX, scoreY);
+                ctx.fillStyle = '#fff';
+            }
+        }
+        
+        // Cookie 操作函数
+        function setCookie(name, value, expires) {
+            document.cookie = `${name}=${encodeURIComponent(value)}; expires=${expires.toUTCString()}; path=/`;
+        }
+        
+        function getCookie(name) {
+            const cookies = document.cookie.split(';');
+            for (const cookie of cookies) {
+                const [cookieName, cookieValue] = cookie.split('=').map(c => c.trim());
+                if (cookieName === name) {
+                    return decodeURIComponent(cookieValue);
+                }
+            }
+            return null;
+        }
+    </script>
+</body>
 </html>
