@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JSON小说阅读器 - 从语文老师到歪嘴龙王</title>
+    <style>
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      :root {
+        --primary-color: #e94560;
+        --dark-bg: #0f172a;
+        --card-bg: #1e293b;
+        --text-color: #e2e8f0;
+        --border-color: #334155;
+        --highlight-color: #4ade80;
+      }
+
+      body {
+        background-color: var(--dark-bg);
+        color: var(--text-color);
+        line-height: 1.6;
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
+      }
+
+      .btn {
+        background: var(--card-bg);
+        color: var(--text-color);
+        border: none;
+        padding: 10px 15px;
+        border-radius: 8px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      }
+
+      .btn:hover {
+        background: var(--primary-color);
+        transform: translateY(-2px);
+      }
+
+      .main-content {
+        display: flex;
+        gap: 30px;
+        margin-bottom: 40px;
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 20px;
+      }
+
+      .sidebar {
+        flex: 0 0 280px;
+        background: var(--card-bg);
+        border-radius: 15px;
+        padding: 20px;
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+        height: fit-content;
+        position: sticky;
+        top: 20px;
+      }
+
+      .book-info {
+        text-align: center;
+        margin-bottom: 25px;
+        padding-bottom: 20px;
+        border-bottom: 1px solid var(--border-color);
+      }
+
+      .cover {
+        width: 160px;
+        aspect-ratio: 3 / 4;
+        background-image: url(./c.jpg);
+        background-size: 160px;
+        margin: 0 auto 15px;
+        box-shadow: 0 6px 10px rgba(0, 0, 0, 0.3);
+      }
+
+      .title {
+        font-size: 1.5rem;
+        margin-bottom: 5px;
+        color: var(--primary-color);
+      }
+
+      .author {
+        font-size: 1.1rem;
+        color: var(--text-color);
+        margin-bottom: 15px;
+      }
+
+      .book-stats {
+        display: flex;
+        justify-content: center;
+        gap: 15px;
+        margin-top: 15px;
+      }
+
+      .stat-item {
+        text-align: center;
+      }
+
+      .stat-value {
+        font-size: 1.4rem;
+        font-weight: bold;
+        color: var(--primary-color);
+      }
+
+      .stat-label {
+        font-size: 0.9rem;
+        color: #94a3b8;
+      }
+
+      .chapters-container {
+        max-height: 500px;
+        overflow-y: auto;
+        padding-right: 10px;
+      }
+
+      .chapters-container h3 {
+        margin-bottom: 15px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid var(--border-color);
+        color: var(--primary-color);
+      }
+
+      .chapter-list {
+        list-style: none;
+        padding: 0;
+      }
+
+      .chapter-item {
+        padding: 12px 15px;
+        border-radius: 8px;
+        margin-bottom: 8px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+      }
+
+      .chapter-item:hover {
+        background: var(--primary-color);
+      }
+
+      .chapter-item.active {
+        background: var(--primary-color);
+        font-weight: bold;
+      }
+
+      .reader-area {
+        flex: 1;
+        background: var(--card-bg);
+        border-radius: 15px;
+        padding: 0 30px 30px;
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+      }
+
+      .chapter-header {
+        margin-bottom: 25px;
+        padding-bottom: 15px;
+        border-bottom: 1px solid var(--border-color);
+      }
+
+      .chapter-title {
+        font-size: 2rem;
+        color: var(--primary-color);
+        margin-bottom: 10px;
+      }
+
+      .chapter-meta {
+        display: flex;
+        gap: 20px;
+        color: #94a3b8;
+        font-size: 0.9rem;
+      }
+
+      .chapter-content {
+        font-size: 1.1rem;
+        line-height: 1.8;
+      }
+
+      .chapter-content p {
+        margin-bottom: 20px;
+        text-indent: 2em;
+      }
+
+      .reader-controls {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 30px;
+        padding-top: 20px;
+        border-top: 1px solid var(--border-color);
+      }
+
+      .nav-buttons {
+        display: flex;
+        gap: 15px;
+      }
+
+      .settings {
+        display: flex;
+        gap: 15px;
+        align-items: center;
+      }
+
+      .setting-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .setting-label {
+        font-size: 0.9rem;
+        color: #94a3b8;
+      }
+
+      .font-controls {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .font-btn {
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        background: var(--dark-bg);
+        color: var(--text-color);
+        border: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+      }
+
+      .font-btn:hover {
+        background: var(--primary-color);
+      }
+
+      .theme-selector {
+        display: flex;
+        gap: 5px;
+      }
+
+      .theme-option {
+        width: 25px;
+        height: 25px;
+        border-radius: 50%;
+        cursor: pointer;
+        border: 2px solid transparent;
+      }
+
+      .theme-option.active {
+        border-color: var(--text-color);
+      }
+
+      .theme-dark {
+        background: linear-gradient(135deg, #0f172a, #1e293b);
+      }
+
+      .theme-sepia {
+        background: #f0e6d2;
+      }
+
+      .theme-light {
+        background: #f8fafc;
+      }
+
+      footer {
+        background: #0f172a;
+        padding: 20px 0;
+        text-align: center;
+        margin-top: auto;
+        color: aliceblue;
+      }
+
+      .footer-content {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0 20px;
+      }
+
+      ::-webkit-scrollbar {
+        width: 0;
+      }
+      
+      .mobile-header {
+        display: none;
+      }
+      
+      @media (max-width: 900px) {
+        .main-content {
+          flex-direction: column;
+          width: 100%;
+          padding: 0;
+        }
+        .reader-area{
+          padding: 0 1em 1em;
+          border-radius: 0;
+        }
+        .chapter-title{
+          margin: 0 10px;
+        }
+        .overlay {
+          display: none;
+          position: fixed;
+          width: 100%;
+          height: 100%;
+          background: rgba(0, 0, 0, 0.3);
+          z-index: 98;
+        }
+        .sidebar {
+          position: fixed;
+          top: 0;
+          left: -100%;
+          width: 85%;
+          max-width: 320px;
+          height: 100vh;
+          z-index: 99;
+          border-radius: 0;
+          overflow-y: auto;
+          transition: left 0.3s ease;
+        }
+        
+        .reader-controls {
+          flex-direction: column;
+          gap: 20px;
+        }
+
+        .settings {
+          justify-content: center;
+        }
+        
+        .mobile-header {
+          display: flex;
+          background: var(--card-bg);
+          padding: 0.5em;
+          position: sticky;
+          top: 0;
+          justify-content: space-between;
+          box-shadow: 0 1px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        .mobile-title {
+          font-size: 1.3em;
+          color: var(--primary-color);
+          font-weight: bold;
+        }
+
+        #mobile-menu-btn {
+          background: transparent;
+          color: var(--text-color);
+          font-size: 1.3em;
+          padding: 0 0.5em;
+          cursor: pointer;
+        }
+
+        #mobile-menu-btn:hover {
+          background: rgba(255, 255, 255, 0.1);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="mobile-header"> <div class="mobile-title">围城</div> <div id="mobile-menu-btn">☰</div> </div>
+    <div class="overlay"></div>
+    <div class="main-content">
+      <div class="sidebar">
+        <div class="chapters-container">
+          <h3>章节列表</h3>
+          <ul class="chapter-list" id="chapter-list">
+            <li class="chapter-item">
+              <span>加载章节列表...</span>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="reader-area">
+        <div class="chapter-header">
+          <h2 class="chapter-title" id="chapter-title">加载中...</h2>
+          <div class="chapter-meta">
+            <span id="chapter-position">第 0/0 章</span>
+            <span id="word-count">0字</span>
+          </div>
+        </div>
+
+        <div class="chapter-content" id="chapter-content">
+          <p>正在加载章节内容...</p>
+        </div>
+
+        <div class="reader-controls">
+          <div class="nav-buttons">
+            <button class="btn" id="prev-chapter">
+              <i class="fas fa-arrow-left"></i> 上一章
+            </button>
+            <button class="btn" id="next-chapter">
+              下一章 <i class="fas fa-arrow-right"></i>
+            </button>
+          </div>
+
+          <div class="settings">
+            <div class="setting-item">
+              <span class="setting-label">字体大小</span>
+              <div class="font-controls">
+                <button class="font-btn" id="font-decrease">
+                  <i class="fas fa-minus">小</i>
+                </button>
+                <button class="font-btn" id="font-increase">
+                  <i class="fas fa-plus">大</i>
+                </button>
+              </div>
+            </div>
+
+            <div class="setting-item">
+              <span class="setting-label">主题</span>
+              <div class="theme-selector">
+                <div class="theme-option theme-dark active"></div>
+                <div class="theme-option theme-sepia"></div>
+                <div class="theme-option theme-light"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <footer>
+      <div class="footer-content">
+        <p>内容源于网络 | 本小说仅供个人阅读体验</p>
+        <p>如有侵权立即删除</p>
+      </div>
+    </footer>
+    <script>
+      const chapters = 9;
+      let bookData = new Array(chapters).fill(0);
+      let theme = 1;
+      const themeOptions = document.querySelectorAll('.theme-option');
+      function load(i) {
+        if (bookData[i]) {
+          return;
+        }
+        let xhr = new XMLHttpRequest();
+        xhr.open("GET", `第${(i+1)}章.txt`, false);
+        xhr.send();
+        bookData[i] = xhr.responseText;
+      }
+      document.body.onbeforeunload = function setProgress() {
+        const progress = {
+          index: getCurrentChapterIndex(),
+          position: window.scrollY,
+          theme: theme
+        };
+        localStorage.setItem('readingProgress', JSON.stringify(progress));
+      }
+
+      function getProgress() {
+        const savedData = localStorage.getItem('readingProgress');
+        if (!savedData) {
+          loadChapter(0);
+          return;
+        };
+        let data = JSON.parse(savedData);
+        themeOptions[data.theme||theme].click();
+        loadChapter(data.index);
+        const contentElement = document.getElementById('chapter-content');
+        window.scrollTo({
+          top: data.position,
+          behavior: "smooth"
+        });
+      }
+      document.addEventListener('DOMContentLoaded', function() {
+        const chapterList = document.getElementById('chapter-list');
+        chapterList.innerHTML = '';
+        for(let index = 1;index<=chapters;index++){
+          const li = document.createElement('li');
+          li.className = 'chapter-item';
+          if (index === 0) li.classList.add('active');
+          li.innerHTML = "第" + index + "章";
+          li.addEventListener('click', () => {
+            loadChapter(index-1);
+          });
+          chapterList.appendChild(li);
+        };
+
+        document.getElementById('prev-chapter').addEventListener('click', () => {
+          const currentIndex = getCurrentChapterIndex();
+          if (currentIndex > 0) {
+            loadChapter(currentIndex - 1);
+          }
+        });
+
+        document.getElementById('next-chapter').addEventListener('click', () => {
+          const currentIndex = getCurrentChapterIndex();
+          if (currentIndex < chapters- 1) {
+            loadChapter(currentIndex + 1);
+          }
+        });
+
+
+        const contentElement = document.getElementById('chapter-content');
+        let fontSize = 16;
+
+        document.getElementById('font-increase').addEventListener('click', () => {
+          fontSize = Math.min(22, fontSize + 1);
+          contentElement.style.fontSize = `${fontSize}px`;
+        });
+
+        document.getElementById('font-decrease').addEventListener('click', () => {
+          fontSize = Math.max(14, fontSize - 1);
+          contentElement.style.fontSize = `${fontSize}px`;
+        });
+
+
+        themeOptions.forEach((option,index) => {
+          option.addEventListener('click', () => {
+            themeOptions.forEach(o => o.classList.remove('active'));
+            option.classList.add('active');
+            theme = index;
+            if (option.classList.contains('theme-dark')) {
+              document.documentElement.style.setProperty('--dark-bg', '#0f172a');document.documentElement.style.setProperty('--card-bg', '#1e293b');document.documentElement.style.setProperty('--text-color', '#e2e8f0');
+            } else if (option.classList.contains('theme-sepia')) {
+              document.documentElement.style.setProperty('--dark-bg', '#e6d5b8');document.documentElement.style.setProperty('--card-bg', '#f0e6d2');document.documentElement.style.setProperty('--text-color', '#5c4a36');
+            } else if (option.classList.contains('theme-light')) {
+              document.documentElement.style.setProperty('--dark-bg', '#f1f5f9');document.documentElement.style.setProperty('--card-bg', '#ffffff');document.documentElement.style.setProperty('--text-color', '#334155');
+            }
+          });
+        });
+        getProgress();
+      });
+
+
+      async function loadChapter(index) {
+        window.scrollTo({
+          top: 0,
+          behavior: "smooth"
+        });
+        load(index);
+        load(index + 1);
+        const chapter = bookData[index];
+        document.getElementById('chapter-title').textContent = "第 "+(index+1)+" 章";
+        document.getElementById('chapter-position').textContent = `第 ${index + 1} / ${chapters} 章`;
+
+        const wordCount = chapter.replace(/\s+/g, '').length;
+        document.getElementById('word-count').textContent = `${wordCount}字`;
+        updateActive(index)
+
+        const contentElement = document.getElementById('chapter-content');
+
+        const paragraphs = chapter.split('。').filter(p => p.trim() !== '');
+        let contentHTML = '';
+
+        paragraphs.forEach(p => {
+          contentHTML += `<p>${p}</p>`;
+        });
+
+        contentElement.innerHTML = contentHTML;
+      }
+
+      function getCurrentChapterIndex() {
+        const activeChapter = document.querySelector('.chapter-item.active');
+        if (!activeChapter) return 0;
+        const chapterItems = document.querySelectorAll('.chapter-item');
+        return Array.from(chapterItems).indexOf(activeChapter);
+      }
+
+      function updateActive(index) {
+        const chapterItems = document.querySelectorAll('.chapter-item');
+        chapterItems.forEach((item, i) => {
+          item.classList.toggle('active', i === index);
+          if (i == index) {
+            item.parentElement.parentElement.scrollTo({
+              top: item.offsetTop - item.parentElement.offsetTop,
+              behavior: "smooth"
+            })
+          }
+        });
+      }
+      
+      document.getElementById("mobile-menu-btn").onclick = function(){
+        document.getElementsByClassName("sidebar")[0].style.left = 0;
+        document.getElementsByClassName("overlay")[0].style.display = "block";
+        document.getElementsByClassName("overlay")[0].onclick = function(){
+          document.getElementsByClassName("sidebar")[0].style.left = "-100%";
+          document.getElementsByClassName("overlay")[0].style.display = "none";
+        }
+      }
+    </script>
+  </body>
+</html>
