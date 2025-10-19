@@ -5,21 +5,16 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>云盘</title>
   <style>
-    :root {
-      --primary: #3ecf8e;
-      --dark: #1f2d3d;
-      --light: #f9fafc;
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
     }
     body {
       font-family: 'Segoe UI', system-ui, sans-serif;
-      margin: 0;
-      padding: 0;
       background-color: #f5f7fa;
-      color: var(--dark);
-    }
-    .container {
-      max-width: 1200px;
-      margin: 0 auto;
+      color: #1f2d3d;
+      line-height: 1.6;
       padding: 20px;
     }
     header {
@@ -28,105 +23,120 @@
       align-items: center;
       padding: 15px 0;
       border-bottom: 1px solid #e2e8f0;
+      margin-bottom: 20px;
     }
-    .auth-section {
-      display: flex;
-      gap: 10px;
-    }
-    input, button {
+    input, button, textarea {
       padding: 10px 15px;
       border-radius: 6px;
       border: 1px solid #e2e8f0;
       font-size: 16px;
     }
     button {
-      background-color: var(--primary);
+      background-color: #3ecf8e;
       color: white;
       border: none;
       cursor: pointer;
-      transition: background 0.3s;
-    }
-    button:hover {
-      background-color: #2ebd7d;
     }
     .hidden {
       display: none;
     }
-    .file-manager {
-      margin-top: 30px;
-    }
-    .upload-area {
+    
+    .card {
       background: white;
-      border: 2px dashed #cbd5e0;
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+    
+    .upload-area {
+      border: 2px dashed #e2e8f0;
       border-radius: 8px;
       padding: 30px;
       text-align: center;
-      margin-bottom: 25px;
+      margin-bottom: 20px;
       cursor: pointer;
     }
-    .file-list {
-      background: white;
-      border-radius: 8px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-      overflow: hidden;
+    .item-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+      gap: 15px;
     }
-    .file-item {
-      display: flex;
-      align-items: center;
-      padding: 15px 20px;
-      border-bottom: 1px solid #edf2f7;
-    }
-    .file-item:last-child {
-      border-bottom: none;
-    }
-    .file-name {
-      flex-grow: 1;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-    .file-actions {
-      display: flex;
-      gap: 10px;
+    .item {
+      padding: 15px;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
     }
     .action-btn {
-      background: none;
-      color: var(--dark);
-      padding: 5px 10px;
+      padding: 8px;
       font-size: 14px;
     }
-    .action-btn:hover {
-      background: #edf2f7;
+    .download-btn { background-color: #4299e1; }
+    .delete-btn { background-color: #e53e3e; }
+    
+    .tabs {
+      display: flex;
+      margin-bottom: 20px;
+      border-bottom: 1px solid #e2e8f0;
     }
-    .download-btn { color: #3182ce; }
-    .delete-btn { color: #e53e3e; }
+    .tab {
+      padding: 10px 20px;
+      cursor: pointer;
+      border-bottom: 3px solid transparent;
+    }
+    .tab.active {
+      border-bottom-color: #3ecf8e;
+      font-weight: 600;
+    }
+    .tab-content {
+      display: none;
+    }
+    .tab-content.active {
+      display: block;
+    }
   </style>
 </head>
 <body>
   <div class="container">
     <header>
-      <h1>云盘</h1>
+      <h1>云盘与留言板</h1>
       <div class="auth-section">
         <div id="login-form">
-          <input type="text" id="account" placeholder="账号">
-          <input type="password" id="password" placeholder="密码">
+          <input type="password" id="password" placeholder="输入密码">
           <button id="login-btn">登录</button>
         </div>
         <div id="user-info" class="hidden">
-          <span id="user-email"></span>
           <button id="logout-btn">退出</button>
         </div>
       </div>
     </header>
 
     <main class="hidden" id="main-content">
-      <div class="file-manager">
-        <div class="upload-area" id="upload-area">
-          <p>拖放文件到此处或点击上传</p>
-          <input type="file" id="file-input" style="display:none">
+      <div class="tabs">
+        <div class="tab active" data-tab="files">文件管理</div>
+        <div class="tab" data-tab="messages">留言板</div>
+      </div>
+      
+      <div class="tab-content active" id="files-tab">
+        <div class="card">
+          <div class="upload-area" id="upload-area">
+            <p>拖放文件到此处或点击上传</p>
+            <input type="file" id="file-input" style="display:none">
+          </div>
+          
+          <div class="item-list" id="file-list"></div>
         </div>
-        
-        <div class="file-list" id="file-list"></div>
+      </div>
+      
+      <div class="tab-content" id="messages-tab">
+        <div class="card">
+          <h2>留言板</h2>
+          <div class="message-form">
+            <textarea id="message-content" placeholder="输入留言内容..."></textarea>
+            <button id="add-message-btn">添加留言</button>
+          </div>
+          
+          <div class="item-list" id="message-list"></div>
+        </div>
       </div>
     </main>
   </div>
@@ -135,147 +145,146 @@
     const SUPABASE_URL = 'https://piztdfuhwepukszawxyr.supabase.co';
     const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBpenRkZnVod2VwdWtzemF3eHlyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkzOTUyNDksImV4cCI6MjA3NDk3MTI0OX0.8wrAPR05KKzQgRd5Bh4vDXiwpqHBPwpcckioj1KKbkA';
     const STORAGE_BUCKET = 'cloud';
+    const MESSAGES_TABLE = 'messages';
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    // ===== Supabase客户端初始化 =====
-    const { createClient } = supabase;
-    const supabaseClient = createClient(SUPABASE_URL, SUPABASE_KEY);
-
-    // ===== DOM元素 =====
+    // DOM元素
     const loginForm = document.getElementById('login-form');
     const userInfo = document.getElementById('user-info');
-    const userEmail = document.getElementById('user-email');
     const loginBtn = document.getElementById('login-btn');
-    const signupBtn = document.getElementById('signup-btn');
     const logoutBtn = document.getElementById('logout-btn');
     const mainContent = document.getElementById('main-content');
     const uploadArea = document.getElementById('upload-area');
     const fileInput = document.getElementById('file-input');
     const fileList = document.getElementById('file-list');
+    const messageContent = document.getElementById('message-content');
+    const addMessageBtn = document.getElementById('add-message-btn');
+    const messageList = document.getElementById('message-list');
+    const tabs = document.querySelectorAll('.tab');
+    const tabContents = document.querySelectorAll('.tab-content');
+
+    // 数据缓存
+    const dataCache = {
+      files: [],
+      messages: []
+    };
+
+    // 标签页切换
+    tabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        tabs.forEach(t => t.classList.remove('active'));
+        tabContents.forEach(c => c.classList.remove('active'));
+        
+        tab.classList.add('active');
+        const tabId = tab.dataset.tab;
+        document.getElementById(`${tabId}-tab`).classList.add('active');
+      });
+    });
 
     // ===== 事件监听 =====
     loginBtn.addEventListener('click', handleLogin);
     logoutBtn.addEventListener('click', handleLogout);
     uploadArea.addEventListener('click', () => fileInput.click());
     fileInput.addEventListener('change', fileUpload);
-    uploadArea.addEventListener('dragover', (e) => {
-      e.preventDefault();
-      uploadArea.style.backgroundColor = '#ebf8ff';
-    });
-    uploadArea.addEventListener('dragleave', () => {
-      uploadArea.style.backgroundColor = '';
-    });
+    uploadArea.addEventListener('dragover', (e) => e.preventDefault());
     uploadArea.addEventListener('drop', (e) => {
       e.preventDefault();
-      uploadArea.style.backgroundColor = '';
       if (e.dataTransfer.files.length) {
         fileUpload({ target: { files: e.dataTransfer.files } });
       }
     });
-
-    // ===== 初始化检查登录状态 =====
-    checkAuthState();
-
-    // ===== 功能函数 =====
-    async function checkAuthState() {
-      showAuthenticatedUI();
-      fetchFiles();
+    
+    // 留言板事件
+    addMessageBtn.addEventListener('click', addMessage);
+    
+    // 检查登录状态
+    function checkLogin() {
+      if(localStorage.getItem("sb-piztdfuhwepukszawxyr-auth-token")){
+        fetchFiles();
+        fetchMessages();
+        loginForm.classList.add('hidden');
+        userInfo.classList.remove('hidden');
+        mainContent.classList.remove('hidden');
+      }
     }
-
-    function showAuthenticatedUI() {
-      loginForm.classList.add('hidden');
-      userInfo.classList.remove('hidden');
-      mainContent.classList.remove('hidden');
-    }
-
+    
+    // 初始化
+    checkLogin();
+    
+    // 登录处理
     async function handleLogin() {
-      const account = document.getElementById('account').value;
       const password = document.getElementById('password').value;
-      let { data, error } = await supabaseClient.functions.invoke('validate_static_creds',{ body: {username: account, password: password } })
-
-      if (error) {alert(`登录失败: ${error.message}`);return;}
-      showAuthenticatedUI();
-      fetchFiles();
+      await supabaseClient.auth.signInWithPassword({
+        email: 'user@example.com', 
+        password
+      });
+      checkLogin();
     }
 
+    // 退出处理
     async function handleLogout() {
       await supabaseClient.auth.signOut();
-      loginForm.classList.remove('hidden');
-      userInfo.classList.add('hidden');
-      mainContent.classList.add('hidden');
-      document.getElementById('email').value = '';
-      document.getElementById('password').value = '';
+      document.body.innerHTML = "<h1 style='text-align:center;padding:50px;'>退出成功</h1>";
     }
 
+    // 文件上传
     async function fileUpload(e) {
       const file = e.target.files[0];
       if (!file) return;
 
+      const originalText = uploadArea.innerHTML;
       uploadArea.innerHTML = `<p>上传中: ${file.name}...</p>`;
       
-      const { data, error } = await supabaseClient.storage
+      await supabaseClient.storage
         .from(STORAGE_BUCKET)
         .upload(file.name, file);
 
-      if (error) {
-        alert(`上传失败: ${error.message}`);
-        uploadArea.innerHTML = `<p>拖放文件到此处或点击上传</p>`;
-        return;
-      }
-
-      alert('文件上传成功！');
-      uploadArea.innerHTML = `<p>拖放文件到此处或点击上传</p>`;
-      fetchFiles();
+      // 更新缓存而不是重新获取
+      dataCache.files.push({ name: file.name });
+      renderFileList();
+      uploadArea.innerHTML = originalText;
     }
 
+    // 获取文件列表
     async function fetchFiles() {
-      const { data, error } = await supabaseClient.storage
+      const { data } = await supabaseClient.storage
         .from(STORAGE_BUCKET)
-        .list("")
-      if (error) {
-        console.error('获取文件列表失败:', error);
-        return;
-      }
-
-      renderFileList(data);
+        .list("");
+      dataCache.files = data || [];
+      renderFileList();
     }
 
-    function renderFileList(files) {
+    // 渲染文件列表
+    function renderFileList() {
       fileList.innerHTML = '';
       
-      files.forEach(file => {
+      if (dataCache.files.length === 0) {
+        fileList.innerHTML = '<p>暂无文件</p>';
+        return;
+      }
+      
+      dataCache.files.forEach(file => {
         if (file.name === '.emptyFolderPlaceholder') return;
         
         const fileItem = document.createElement('div');
-        fileItem.className = 'file-item';
+        fileItem.className = 'item';
         fileItem.innerHTML = `
-          <div class="file-name">${file.name}</div>
-          <div class="file-actions">
-            <button class="action-btn download-btn" data-name="${file.name}">下载</button>
-            <button class="action-btn delete-btn" data-name="${file.name}">删除</button>
-          </div>
+          <div class="item-name">${file.name}</div>
+          <button class="action-btn download-btn" data-name="${file.name}">下载</button>
+          <button class="action-btn delete-btn" data-name="${file.name}">删除</button>
         `;
+        
+        fileItem.querySelector('.download-btn').addEventListener('click', () => downloadFile(file.name));
+        fileItem.querySelector('.delete-btn').addEventListener('click', () => deleteFile(file.name));
         fileList.appendChild(fileItem);
-      });
-
-      // 添加下载和删除事件
-      document.querySelectorAll('.download-btn').forEach(btn => {
-        btn.addEventListener('click', () => downloadFile(btn.dataset.name));
-      });
-      
-      document.querySelectorAll('.delete-btn').forEach(btn => {
-        btn.addEventListener('click', () => deleteFile(btn.dataset.name));
       });
     }
 
+    // 下载文件
     async function downloadFile(fileName) {
-      const { data, error } = await supabaseClient.storage
+      const { data } = await supabaseClient.storage
         .from(STORAGE_BUCKET)
         .download(fileName);
-
-      if (error) {
-        alert(`下载失败: ${error.message}`);
-        return;
-      }
 
       const url = URL.createObjectURL(data);
       const a = document.createElement('a');
@@ -287,20 +296,88 @@
       URL.revokeObjectURL(url);
     }
 
+    // 删除文件
     async function deleteFile(fileName) {
-      if (!confirm(`确定要删除 ${fileName} 吗？`)) return;
-      
-      const { error } = await supabaseClient.storage
+      await supabaseClient.storage
         .from(STORAGE_BUCKET)
         .remove([fileName]);
-
-      if (error) {
-        alert(`删除失败: ${error.message}`);
+      
+      // 更新缓存而不是重新获取
+      dataCache.files = dataCache.files.filter(file => file.name !== fileName);
+      renderFileList();
+    }
+    
+    // ===== 留言板功能 =====
+    // 获取留言
+    async function fetchMessages() {
+      const { data } = await supabaseClient
+        .from(MESSAGES_TABLE)
+        .select('*')
+        .order('created_at', { ascending: false });
+      dataCache.messages = data || [];
+      renderMessages();
+    }
+    
+    // 渲染留言
+    function renderMessages() {
+      messageList.innerHTML = '';
+      
+      if (dataCache.messages.length === 0) {
+        messageList.innerHTML = '<p>暂无留言</p>';
         return;
       }
-
-      alert('文件已删除');
-      fetchFiles();
+      
+      dataCache.messages.forEach(message => {
+        const messageItem = document.createElement('div');
+        messageItem.className = 'item';
+        
+        const formattedDate = new Date(message.created_at).toLocaleString('zh-CN', {
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit'
+        });
+        
+        messageItem.innerHTML = `
+          <div class="item-name">${message.content}</div>
+          <div style="font-size:80%;color:#3f2417">${formattedDate}</div>
+          <button class="action-btn delete-btn" data-id="${message.id}">删除</button>
+        `;
+        
+        messageItem.querySelector('.delete-btn').addEventListener('click', () => deleteMessage(message.id));
+        messageList.appendChild(messageItem);
+      });
+    }
+    
+    // 添加留言
+    async function addMessage() {
+      const content = messageContent.value.trim();
+      if (!content) return;
+      
+      const { data } = await supabaseClient
+        .from(MESSAGES_TABLE)
+        .insert([{ content }])
+        .single();
+      
+      if (data) {
+        // 更新缓存而不是重新获取
+        dataCache.messages.unshift(data);
+        renderMessages();
+        messageContent.value = '';
+      }
+    }
+    
+    // 删除留言
+    async function deleteMessage(id) {
+      await supabaseClient
+        .from(MESSAGES_TABLE)
+        .delete()
+        .eq('id', id);
+      
+      // 更新缓存而不是重新获取
+      dataCache.messages = dataCache.messages.filter(msg => msg.id !== id);
+      renderMessages();
     }
   </script>
 </body>
