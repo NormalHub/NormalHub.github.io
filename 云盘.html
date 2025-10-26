@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>云盘</title>
+  <title>云盘与留言板</title>
   <style>
     * {
       box-sizing: border-box;
@@ -98,7 +98,7 @@
 <body>
   <div class="container">
     <header>
-      <h1>云盘与留言板</h1>
+      <h1 id="main-title">云盘与留言板</h1>
       <div class="auth-section">
         <div id="login-form">
           <input type="password" id="password" placeholder="输入密码">
@@ -162,12 +162,17 @@
     const messageList = document.getElementById('message-list');
     const tabs = document.querySelectorAll('.tab');
     const tabContents = document.querySelectorAll('.tab-content');
+    const mainTitle = document.getElementById('main-title');
 
     // 数据缓存
     const dataCache = {
       files: [],
       messages: []
     };
+
+    // 点击计数器
+    let clickCounter = 0;
+    const REQUIRED_CLICKS = 2;
 
     // 标签页切换
     tabs.forEach(tab => {
@@ -197,20 +202,35 @@
     // 留言板事件
     addMessageBtn.addEventListener('click', addMessage);
     
+    // 标题点击事件
+    mainTitle.addEventListener('click', handleTitleClick);
+    
     // 检查登录状态
     function checkLogin() {
       if(localStorage.getItem("sb-piztdfuhwepukszawxyr-auth-token")){
-        fetchFiles();
-        fetchMessages();
         loginForm.classList.add('hidden');
         userInfo.classList.remove('hidden');
-        mainContent.classList.remove('hidden');
+        clickCounter = 0;
       }
     }
     
     // 初始化
     checkLogin();
     
+    // 标题点击处理
+    function handleTitleClick() {
+      if (userInfo.classList.contains('hidden')) return;
+      
+      clickCounter++;
+      
+      if (clickCounter >= REQUIRED_CLICKS) {
+        // 三次点击后加载内容
+        mainContent.classList.remove('hidden');
+        fetchFiles();
+        fetchMessages();
+      }
+    }
+
     // 登录处理
     async function handleLogin() {
       const password = document.getElementById('password').value;
@@ -224,7 +244,8 @@
     // 退出处理
     async function handleLogout() {
       await supabaseClient.auth.signOut();
-      document.body.innerHTML = "<h1 style='text-align:center;padding:50px;'>退出成功</h1>";
+      localStorage.removeItem("sb-piztdfuhwepukszawxyr-auth-token");
+      location.reload();
     }
 
     // 文件上传
