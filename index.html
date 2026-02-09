@@ -5,46 +5,98 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>导航页</title>
     <style>
-      * {margin: 0;box-sizing: border-box;font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;}
-      body {background-color: aliceblue;min-height: 100vh;padding: 30px 100px;color: #333;}
-      .container {max-width: 1200px;margin: 0 auto;}
-      .search-container {display: flex;justify-content: center;margin-bottom: 30px;}
-      .search-box {width: 100%;max-width: 500px;padding: 12px 20px;border: none;border-radius: 30px;font-size: 1rem;box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);outline: none;}
-      .file-grid {display: grid;grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));gap: 25px;}
-      .file-card {background: white;border-radius: 12px;overflow: hidden;box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);transition: transform 0.3s, box-shadow 0.3s;display: flex;flex-direction: column;}
-      .file-card:hover {transform: translateY(-5px);box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);}
-      .file-icon {height: 120px;background: #3498db;display: flex;align-items: center;justify-content: center;color: white;font-size: 3rem;}
-      .file-content {padding: 20px;flex-grow: 1;display: flex;flex-direction: column;}
-      .file-name {font-size: 1.3rem;font-weight: 600;margin-bottom: 10px;color: #2c3e50;}
-      .file-path {font-size: 0.9rem;color: #7f8c8d;margin-bottom: 15px;}
-      .file-link {display: inline-block;background: #3498db;color: white;padding: 8px 15px;border-radius: 4px;text-decoration: none;font-weight: 500;text-align: center;transition: background 0.3s;margin-top: auto;}
-      .file-link:hover {background: #2980b9;}
-      .folder-info {background: #f8f9fa;padding: 20px;border-radius: 8px;margin-bottom: 30px;box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);}
-      .folder-info h2 {margin-bottom: 10px;color: #2c3e50;}
+      * { margin: 0; box-sizing: border-box; font-family: "Segoe UI", "Microsoft YaHei", sans-serif; }
+      body { background-color: aliceblue; min-height: 100vh; padding: 30px 100px; color: #333; }
+      .container { max-width: 1200px; margin: 0 auto; }
+      .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+      .title { font-size: 1.6rem; color: #2c3e50; }
+      .search-container { display: flex; justify-content: center; margin-bottom: 30px; }
+      .search-box { width: 100%; max-width: 500px; padding: 12px 20px; border: none; border-radius: 30px; font-size: 1rem; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); outline: none; }
+      .file-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 25px; }
+      .file-card { background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08); transition: transform 0.3s, box-shadow 0.3s; display: flex; flex-direction: column; }
+      .file-card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15); }
+      .file-icon { height: 120px; background: #3498db; display: flex; align-items: center; justify-content: center; color: white; font-size: 3rem; }
+      .file-content { padding: 20px; flex-grow: 1; display: flex; flex-direction: column; }
+      .file-name { font-size: 1.3rem; font-weight: 600; margin-bottom: 10px; color: #2c3e50; }
+      .file-path { font-size: 0.9rem; color: #7f8c8d; margin-bottom: 15px; }
+      .file-link { display: inline-block; background: #3498db; color: white; padding: 8px 15px; border-radius: 4px; text-decoration: none; font-weight: 500; text-align: center; transition: background 0.3s; margin-top: auto; }
+      .file-link:hover { background: #2980b9; }
+      .status { color: #7f8c8d; font-size: 0.95rem; }
+      .error { color: #c0392b; }
+      @media (max-width: 900px) {
+        body { padding: 20px; }
+      }
     </style>
   </head>
   <body>
-    <div class="search-container"> <input type="text" class="search-box" placeholder="搜索HTML文件..." id="searchInput"></div>
-    <div class="file-grid" id="fileGrid"></div>
+    <div class="container">
+      <div class="header">
+        <div class="title">导航页</div>
+        <div class="status" id="status">加载中...</div>
+      </div>
+      <div class="search-container">
+        <input type="text" class="search-box" placeholder="搜索 HTML 文件..." id="searchInput">
+      </div>
+      <div class="file-grid" id="fileGrid"></div>
+    </div>
     <script>
-      // HTML文件数据
-      const htmlFiles = [{name: "脚本",path: "i.html",icon: "📄"},{name: "音乐",path: "m.html",icon: "📄"},{name: "视频",path: "p.html",icon: "📄"},{name: "云盘.html",path: "云盘.html",icon: "☁"},{name: "围城.html",path: "围城/index.html",icon: "📕"},
-        {name: "小说.html",path: "novel.html",icon: "📕️"}
-      ];
+      const state = {
+        files: []
+      };
+
+      function getIcon(file) {
+        if (file.type === "dir") return "📁";
+        return "📄";
+      }
+
       function generateFileCards(files) {
-        const fileGrid = document.getElementById('fileGrid');
-        fileGrid.innerHTML = '';
+        const fileGrid = document.getElementById("fileGrid");
+        fileGrid.innerHTML = "";
+
+        if (!files.length) {
+          fileGrid.innerHTML = "<div class='status'>没有匹配的文件</div>";
+          return;
+        }
 
         files.forEach(file => {
-          const card = document.createElement('div');
-          card.className = 'file-card';
-          card.innerHTML = `<div class="file-icon" style="font-family: Segoe UI Symbol;">${file.icon}</div><div class="file-content"><div class="file-name">${file.name}</div><div class="file-path">路径: ${file.path}</div><a href="${file.path}" class="file-link">打开文件</a></div>`;
+          const card = document.createElement("div");
+          card.className = "file-card";
+          card.innerHTML = `
+            <div class="file-icon" style="font-family: Segoe UI Symbol;">${getIcon(file)}</div>
+            <div class="file-content">
+              <div class="file-name">${file.name}</div>
+              <div class="file-path">路径: ${file.path}</div>
+              <a href="${file.path}" class="file-link">打开文件</a>
+            </div>
+          `;
           fileGrid.appendChild(card);
         });
       }
-      generateFileCards(htmlFiles);
-      document.getElementById('searchInput').addEventListener('input', function(e) {const searchTerm = e.target.value.toLowerCase();const filteredFiles = htmlFiles.filter(file =>file.name.toLowerCase().includes(searchTerm));generateFileCards(filteredFiles);});
+
+      async function loadFiles() {
+        const status = document.getElementById("status");
+        try {
+          const res = await fetch("/api/html-files");
+          if (!res.ok) throw new Error("load_failed");
+          const data = await res.json();
+          state.files = data.files || [];
+          generateFileCards(state.files);
+          status.textContent = `共 ${state.files.length} 项`;
+        } catch (err) {
+          status.textContent = "加载失败";
+          status.classList.add("error");
+        }
+      }
+
+      document.getElementById("searchInput").addEventListener("input", function (e) {
+        const searchTerm = e.target.value.toLowerCase();
+        const filteredFiles = state.files.filter(file =>
+          file.name.toLowerCase().includes(searchTerm)
+        );
+        generateFileCards(filteredFiles);
+      });
+
+      loadFiles();
     </script>
   </body>
 </html>
-
